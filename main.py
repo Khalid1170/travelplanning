@@ -99,7 +99,7 @@ def add_user():
 
 def delete_user():
     """
-    Allows the user to delete an existing user by entering the user ID.
+    Deletes a user along with their trips and activities.
     """
     users = session.query(User).all()
     if not users:
@@ -121,7 +121,7 @@ def delete_user():
         if user:
             session.delete(user)
             session.commit()
-            print(f"✅ User '{user.name}' deleted successfully!")
+            print(f"✅ User '{user.name}' and their associated trips and activities have been deleted!")
         else:
             print("⚠️ User not found!")
     else:
@@ -129,21 +129,24 @@ def delete_user():
 
     return_to_menu()
 
+
 # ----------------- Trip Management ----------------- #
 
 def view_trips():
     """
-    Displays a list of all trips, along with the users who created them.
+    Displays a list of all trips along with their associated users.
+    Only shows trips where the user exists.
     """
-    trips = session.query(Trip).all()
+    trips = session.query(Trip).join(User).all()  # Ensure only valid trips are shown
+
     if not trips:
-        print("No trips found.")
+        print("⚠️ No trips found.")
     else:
         for trip in trips:
-            user_name = trip.user.name if trip.user else "Unknown User"
-            print(f"{trip.id}: {trip.destination} (by {user_name})")
-    
+            print(f"{trip.id}: {trip.destination} (by {trip.user.name})")  # User guaranteed to exist
+
     return_to_menu()
+
 
 def add_trip():
     """
@@ -179,7 +182,7 @@ def delete_trip():
     """
     Allows a user to delete a trip by entering the trip ID.
     """
-    trips = session.query(Trip).all()
+    trips = session.query(Trip).join(User).all()
     if not trips:
         print("No trips found.")
         return_to_menu()
@@ -212,52 +215,58 @@ def delete_trip():
 def view_activities():
     """
     Displays a list of all activities along with their associated trips and users.
+    Only shows activities where the trip has a valid user.
     """
-    activities = session.query(Activity).all()
-    
+    activities = session.query(Activity).join(Trip).join(User).all()  # Ensure valid user-trips
+
     if not activities:
-        print("No activities found.")
+        print("⚠️ No activities found.")
     else:
         for activity in activities:
             trip = activity.trip
-            user = trip.user if trip else None
+            user = trip.user  # Ensured valid by join condition
             
-            trip_name = trip.destination if trip else "Unknown Trip"
-            user_name = user.name if user else "Unknown User"
-
-            print(f"{activity.id}: {activity.name} (Trip: {trip_name}, User: {user_name})")
+            print(f"{activity.id}: {activity.name} (Trip: {trip.destination}, User: {user.name})")
     
     return_to_menu()
+ 
 
 def add_activity():
     """
-    Allows a user to add an activity to a specific trip they own.
+    Adds a new activity to a selected trip.
+    Only displays trips that have a valid associated user.
     """
-    name = input("Enter activity name: ").strip().title()
+    activity_name = input("Enter activity name: ").strip()
+
+    trips = session.query(Trip).join(User).all()  # Only fetch trips with valid users
+
+    if not trips:
+        print("⚠️ No available trips found! Please add a user and trip first.")
+        return_to_menu()
+        return
 
     print("\n📌 Available Trips:")
-    trips = session.query(Trip).all()
     for trip in trips:
-        print(f"- {trip.destination} (by {trip.user.name})")
+        print(f"{trip.id}: {trip.destination} (by {trip.user.name})")
 
-    destination = input("Enter destination for activity: ").strip().title()
-    trip = session.query(Trip).filter_by(destination=destination).first()
-
-    if not trip:
-        print("⚠️ Trip not found! Please enter a valid destination.")
+    try:
+        trip_id = int(input("Enter the Trip ID to associate this activity with: ").strip())
+    except ValueError:
+        print("❌ Invalid input. Please enter a numeric Trip ID.")
         return_to_menu()
         return
 
-    if trip.user_id is None:
-        print("⚠️ This trip has no associated user. Please fix the database.")
+    selected_trip = session.query(Trip).filter_by(id=trip_id).first()
+
+    if not selected_trip or not selected_trip.user:
+        print("❌ Trip ID not found or the trip has no associated user.")
         return_to_menu()
         return
 
-    new_activity = Activity(name=name, trip_id=trip.id)
+    new_activity = Activity(name=activity_name, trip_id=selected_trip.id)
     session.add(new_activity)
     session.commit()
-    print(f"✅ Activity '{name}' added successfully to '{destination}'!")
-    
+    print(f"✅ Activity '{activity_name}' added to {selected_trip.destination}!")
     return_to_menu()
 
 if __name__ == "__main__":
