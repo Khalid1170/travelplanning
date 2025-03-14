@@ -1,0 +1,23 @@
+🌍 Travel Planning CLI
+A command-line interface (CLI) application to manage users, trips, and activities. This tool helps users plan and organize travel itineraries efficiently using Python and SQLAlchemy.
+
+✨ Features
+✅ User Management – Add, view, and delete users.
+✅ Trip Management – Create, view, and delete trips associated with users.
+✅ Activity Management – Assign activities to trips and remove them as needed.
+✅ Interactive Menu – Navigate smoothly with an easy-to-use CLI interface.
+✅ Data Persistence – Uses SQLite to store all user, trip, and activity data.
+
+🛠 Technologies Used
+Python 3.8+ – Programming language
+SQLAlchemy – ORM for database management
+SQLite – Database for storing user, trip, and activity data
+Alembic – Database migrations
+Faker – Generate fake user data for testing
+🤝 Contributing
+Contributions are welcome! 🚀 If you’d like to improve this project:
+
+Fork the repository
+Create a feature branch (feature/new-functionality)
+Commit your changes
+Push to GitHub and open a pull request
